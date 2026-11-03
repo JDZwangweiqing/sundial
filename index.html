@@ -491,6 +491,16 @@ function render(){
     label3(add(Cw,mul(D.F.p,tp+0.08)),(D.F.p.U>=0?'北天极':'南天极'),'#5b8dc0',11);
   }
 
+  /* ---- 太阳（周日轨道上，地平以下不显示；正投影深度：位于晷体之前，可被晷体遮挡） ---- */
+  if(sunUp){
+    const sp=proj(mul(s,RS));
+    const gg=ctx.createRadialGradient(sp[0],sp[1],2,sp[0],sp[1],26);
+    gg.addColorStop(0,'rgba(255,196,80,.95)');gg.addColorStop(1,'rgba(255,196,80,0)');
+    ctx.fillStyle=gg;ctx.beginPath();ctx.arc(sp[0],sp[1],26,0,7);ctx.fill();
+    ctx.beginPath();ctx.arc(sp[0],sp[1],8,0,7);ctx.fillStyle='#f5b13c';ctx.fill();
+    ctx.strokeStyle='#e39a26';ctx.lineWidth=1.5;ctx.stroke();
+  }
+
   /* ---- 赤道式晷盘投在地面上的柔和影子（不设基座） ---- */
   if(S.type==='eq'&&S.opt.ground){
     const c0=proj(mul(V(0,0,0.012),SCALE)), rad=Math.max(8,F0*0.78*SCALE);
@@ -513,7 +523,7 @@ function render(){
   };
   if(S.type==='vt'&&facing) drawWall();
 
-  const drawGnomon=(base,dir,showLabel=true)=>{
+  const drawGnomon=(base,dir)=>{
     const tip=add(base,mul(dir,L));
     ctx.lineCap='round';
     ctx.strokeStyle='rgba(35,40,50,.16)';ctx.lineWidth=9;line3(base,tip);   // 杆下淡影
@@ -525,11 +535,7 @@ function render(){
     const bp=proj(base);                                     // 针根铜环
     ctx.beginPath();ctx.arc(bp[0],bp[1],4.4,0,7);
     ctx.fillStyle='#b18a55';ctx.fill();ctx.strokeStyle='#7d6038';ctx.lineWidth=1;ctx.stroke();
-    const ang=Math.asin(clamp(Math.abs(dot(dir,D.n)),-1,1))*R2D;
-    const pp=perpOf(D,dir);
-    if(showLabel) label3(add(base,comb(dir,L*0.55,pp,0.20)),'∠'+ang.toFixed(1)+'°','#4a5568',11);
   };
-  function perpOf(D,dir){const c=cross(dir,D.n);return len(c)>1e-6?norm(c):D.u;}
 
   const drawDial=()=>{
     const Cc=add(C,mul(D.n,D.th/2));             // 晷面体中心（贴墙/贴地）
@@ -655,7 +661,7 @@ function render(){
     /* 赤道式：晷针贯穿盘体，正反两面同时伸出 */
     const nb=facing?frontBase:backBase, fb=facing?backBase:frontBase;
     const nd=facing?D.g:mul(D.g,-1), fd=facing?mul(D.g,-1):D.g;
-    drawGnomon(fb,fd,false);      // 远侧晷针（被不透明盘体遮挡，仅露出盘外部分）
+    drawGnomon(fb,fd);            // 远侧晷针（被不透明盘体遮挡，仅露出盘外部分）
     drawDial();
     drawGnomon(nb,nd);            // 近侧晷针
   }else if(facing){
@@ -666,15 +672,6 @@ function render(){
   }
 
   if(SCALE!==1) ctx.restore();
-  /* ---- 太阳（沿周日轨道运动，地平以下不显示；只保留一个太阳图标，无文字） ---- */
-  if(sunUp){
-    const sp=proj(mul(s,RS));
-    const gg=ctx.createRadialGradient(sp[0],sp[1],2,sp[0],sp[1],26);
-    gg.addColorStop(0,'rgba(255,196,80,.95)');gg.addColorStop(1,'rgba(255,196,80,0)');
-    ctx.fillStyle=gg;ctx.beginPath();ctx.arc(sp[0],sp[1],26,0,7);ctx.fill();
-    ctx.beginPath();ctx.arc(sp[0],sp[1],8,0,7);ctx.fillStyle='#f5b13c';ctx.fill();
-    ctx.strokeStyle='#e39a26';ctx.lineWidth=1.5;ctx.stroke();
-  }
 
   updateInfo(D,dec,eot,alt,azi,litFront,sunUp,litVis,facing,s);
 }
